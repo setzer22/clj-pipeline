@@ -1,5 +1,5 @@
 (ns clj-pipeline.core
-  (:require [clojure.spec :as spec]))
+  (:require [clojure.spec.alpha :as spec]))
 
 #_"We will define this nice utility function:"
 
@@ -75,7 +75,7 @@
   (spec/cat
    :name symbol?
    :docstring (spec/? string?)
-   :args :clojure.core.specs/arg-list
+   :args :clojure.core.specs.alpha/arg-list
    :body (spec/* any?)))
 
 (defn conform-or-throw
@@ -91,7 +91,7 @@
 
 (defmacro defpipe-input [& macro-args]
   (let [{:keys [name args body docstring]} (conform-or-throw ::defpipe-macro-args macro-args)
-        arglist (vec (spec/unform :clojure.core.specs/arg-list args))]
+        arglist (vec (spec/unform :clojure.core.specs.alpha/arg-list args))]
     `(defn ~name ~arglist
        (let [ret# (do ~@body)]
          (assert (map? ret#) "Input step must return an env")
@@ -99,15 +99,15 @@
 
 (defmacro defpipe-step [& macro-args]
   (let [{:keys [name args body docstring]} (conform-or-throw ::defpipe-macro-args macro-args)
-        arglist (vec (spec/unform :clojure.core.specs/arg-list args))]
+        arglist (vec (spec/unform :clojure.core.specs.alpha/arg-list args))]
     `(defn ~name [{:keys ~arglist :as in#}]
        (let [ret# (do ~@body)]
-         (assert (map? ret#) "Input step must return an env")
+         (assert (map? ret#) (str "Intermediate step " ~name " must return an env"))
          (merge in# ret#)))))
 
 (defmacro defpipe-output [& macro-args]
   (let [{:keys [name args body docstring]} (conform-or-throw ::defpipe-macro-args macro-args)
-        arglist (vec (spec/unform :clojure.core.specs/arg-list args))]
+        arglist (vec (spec/unform :clojure.core.specs.alpha/arg-list args))]
     `(defn ~name [{:keys ~arglist :as in#}]
        (do ~@body))))
 
@@ -145,3 +145,7 @@
                 --test-step-2
                 --test-step-3)
   )
+
+#_"Useful for conditional pipelines where you want to do something only under certain conditions"
+(defpipe-step nop-step []
+  {})
