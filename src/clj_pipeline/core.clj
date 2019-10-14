@@ -75,7 +75,7 @@
   (spec/cat
    :name symbol?
    :docstring (spec/? string?)
-   :args :clojure.core.specs.alpha/arg-list
+   :args :clojure.core.specs.alpha/seq-binding-form
    :body (spec/* any?)))
 
 (defn conform-or-throw
@@ -91,7 +91,7 @@
 
 (defmacro defpipe-input [& macro-args]
   (let [{:keys [name args body docstring]} (conform-or-throw ::defpipe-macro-args macro-args)
-        arglist (vec (spec/unform :clojure.core.specs.alpha/arg-list args))]
+        arglist (vec (spec/unform :clojure.core.specs.alpha/seq-binding-form args))]
     `(defn ~name ~arglist
        (let [ret# (do ~@body)]
          (assert (map? ret#) "Input step must return an env")
@@ -99,7 +99,7 @@
 
 (defmacro defpipe-step [& macro-args]
   (let [{:keys [name args body docstring]} (conform-or-throw ::defpipe-macro-args macro-args)
-        arglist (vec (spec/unform :clojure.core.specs.alpha/arg-list args))]
+        arglist (vec (spec/unform :clojure.core.specs.alpha/seq-binding-form args))]
     `(defn ~name [{:keys ~arglist :as in#}]
        (let [ret# (do ~@body)]
          (assert (map? ret#) (str "Intermediate step " ~name " must return an env"))
@@ -107,7 +107,7 @@
 
 (defmacro defpipe-output [& macro-args]
   (let [{:keys [name args body docstring]} (conform-or-throw ::defpipe-macro-args macro-args)
-        arglist (vec (spec/unform :clojure.core.specs.alpha/arg-list args))]
+        arglist (vec (spec/unform :clojure.core.specs.alpha/seq-binding-form args))]
     `(defn ~name [{:keys ~arglist :as in#}]
        (do ~@body))))
 
@@ -138,7 +138,7 @@
 
   (--test-step-2 {:x 3 :y 2})
 
-  (--test-step3 {:x 3 :y 2 :test 5})
+  (--test-step-3 {:x 3 :y 2 :test 5})
 
   (run-pipeline [3 2]
                 --test-step-1
